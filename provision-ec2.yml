@@ -1,0 +1,26 @@
+---
+
+- name: provision ec2 instance
+  hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+    - common
+    - { role: java_corretto, tags: [ 'java' ] }
+    - { role: filebeat, tags: [ 'filebeat' ] }
+    - { role: filebeat_config, tags: [ 'filebeat' ] }
+    - letsencrypt
+    - nginx_config
+    - runningdinner_app
+  vars:
+    os_user: "ubuntu"
+    home_dir: "/home/ubuntu"
+    sslcert_dir: "{{ home_dir }}/sslcert"
+    app_dir: "{{ home_dir }}/runningdinner"
+    upload_dir: "{{ home_dir }}/upload"
+    s3_bucket: "runyourdinner"
+    credentials_dir: "/home/clemens/Dev/projects/runningdinner-credentials"
+    logzio_token:
+
+

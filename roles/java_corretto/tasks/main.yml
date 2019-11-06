@@ -1,0 +1,6 @@
+---
+  - include: tasks_java.yml
+    when: ansible_os_family != "Windows"
+
+  - include: tasks_java_win.yml
+    when: ansible_os_family == "Windows"

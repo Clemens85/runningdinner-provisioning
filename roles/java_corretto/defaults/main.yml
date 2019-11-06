@@ -1,0 +1,18 @@
+---
+# defaults file for sa-java
+  java_version: 8
+
+  role_dir: "{{role_path}}"
+
+  option_validate_checksum: false
+
+  java_debian_install_method: installer # source
+
+  java_download_folder: /usr/src
+  java_folder: /usr/lib/jvm
+  java_alias: "java-{{ java_version }}-corretto"
+
+  debian_download_url:  "https://d3pxv6yz143wms.cloudfront.net/java-1.8.0-amazon-corretto-jdk_8.192.12-2_amd64.deb"
+  windows_download_url:  "https://d3pxv6yz143wms.cloudfront.net/amazon-corretto-preview2_1-8u192-windows-x86.msi"
+  rpm_download_url: "https://d3pxv6yz143wms.cloudfront.net/java-1.8.0-amazon-corretto-devel-1.8.0_192.b12-2.x86_64.rpm"
+  source_download_url: "https://d1f2yzg3dx5xke.cloudfront.net/amazon-corretto-8.202.08.1-linux-x64.tar.gz"

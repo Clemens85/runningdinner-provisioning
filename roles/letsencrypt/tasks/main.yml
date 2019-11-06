@@ -1,0 +1,45 @@
+---
+
+- name: create folder for letsencrypt sslcert
+  file: >
+    path="{{ sslcert_dir }}"
+    state=directory
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: sslcert
+
+- name: Copy auth-hook.sh
+  copy: >
+    src=auth-hook.sh
+    dest="{{ sslcert_dir }}/auth-hook.sh"
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0644
+  tags: sslcert
+
+- name: Copy renew ssl cert script
+  template:
+    src=renew-cert-nginx.sh.j2
+    dest="{{ sslcert_dir }}/renew-cert-nginx.sh"
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0644
+  tags: sslcert
+
+- name: Add Path to crontab
+  cron:
+    name: PATH
+    env: yes
+    job: /home/ubuntu/bin:/home/ubuntu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  tags: sslcert
+
+- name: Add renew ssl cert script to crontab
+  cron:
+    name: "renew ssl cert"
+    minute: "0"
+    hour: "4"
+    day: "10"
+    month: "3,6,9,12"
+    job: "{{ sslcert_dir }}/renew-cert-nginx.sh >> {{ sslcert_dir }}/renew-cert.log"
+  tags: sslcert

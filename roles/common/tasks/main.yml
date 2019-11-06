@@ -1,0 +1,104 @@
+---
+
+#- name: add certbot repo
+#  apt_repository:
+#    repo: ppa:certbot/certbot
+
+- name: apt update
+  apt:
+    update_cache: yes
+    cache_valid_time: 0
+  tags: update-software-packages
+
+- name: apt upgrade
+  apt:
+    update_cache: yes
+    autoremove: yes
+    force: yes
+    install_recommends: yes
+    upgrade: dist
+  tags: update-software-packages
+
+- name: install common stuff and nginx
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - zip
+      - mc
+      - nano
+      - curl
+      - jq
+      - software-properties-common # Needed for certbot
+      - apt-transport-https # Needed for filebeat
+      - nginx
+      - awscli
+  tags: common
+
+- name: install certbot
+  apt: name=certbot
+  tags: common
+
+#- name: install pip
+#  easy_install:
+#    name: pip
+#    state: latest
+#    update_cache: yes
+#- name: Install pip
+#  apt:
+#    name: python-pip
+#    update_cache: yes
+#    state: present
+#  tags: common
+
+
+- name: create folder /home/ubuntu/.aws
+  file: >
+    path="{{ home_dir }}/.aws"
+    state=directory
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: common
+
+- name: Copy AWS config
+  copy: >
+    src=aws_config
+    dest="{{ home_dir }}/.aws/config"
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0644
+  tags: common
+
+- name: Copy AWS credentials
+  copy: >
+    src="{{ credentials_dir }}/aws_credentials_technical_user"
+    dest="{{ home_dir }}/.aws/credentials"
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0644
+  tags: common
+
+- name: create appdir folder
+  file: >
+    path="{{ app_dir }}"
+    state=directory
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: common
+
+- name: create upload folder for deployments
+  file: >
+    path="{{ upload_dir }}"
+    state=directory
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: common
+
+
+#- name: Activate Nginx Full ufw
+#  shell: ufw allow 'Nginx Full'
+# sudo ufw allow 'Nginx Full' should also be done

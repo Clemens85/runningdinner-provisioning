@@ -1,0 +1,14 @@
+---
+
+  - name: Download earthrise.jpg to specified path
+    win_get_url:
+      url: "{{ windows_download_url }}"
+      dest: C:\amazon-corretto.msi
+
+  - name: Java | Install package
+    win_msi:
+      path: C:\amazon-corretto.msi
+      wait: yes
+
+  - name: Java | Add java to path
+    script: files/windows/java_dsc.ps1

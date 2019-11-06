@@ -1,0 +1,10 @@
+---
+- hosts: all
+
+  roles:
+    - {
+        role: "role_under_test",
+        docker_test: true
+#        java_debian_install_method: "source"
+      }
+

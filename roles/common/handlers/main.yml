@@ -1,0 +1,10 @@
+---
+
+- name: reload systemd
+  command: systemctl daemon-reload
+
+- name: restart filebeat
+  service: name=filebeat state=restarted
+
+- name: start nginx
+  service: name=nginx state=restarted

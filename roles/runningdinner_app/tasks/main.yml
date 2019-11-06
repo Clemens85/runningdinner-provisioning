@@ -1,0 +1,25 @@
+---
+
+- name: Copy deploy.sh
+  copy: >
+    src="{{ playbook_dir }}/artefacts/deploy.sh"
+    dest="{{ upload_dir }}/deploy.sh"
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: runningdinner_app
+
+- name: Copy runningdinner.jar
+  copy: >
+    src="{{ playbook_dir }}//artefacts/runningdinner-2.0.0.jar"
+    dest="{{ upload_dir }}/runningdinner-2.0.0.jar"
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: runningdinner_app
+
+- name: Start deploy process
+  become: yes
+  become_user: "{{ os_user }}"
+  command: "{{ upload_dir }}/deploy.sh"
+  tags: runningdinner_app

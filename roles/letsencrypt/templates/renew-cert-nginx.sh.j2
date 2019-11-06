@@ -1,0 +1,49 @@
+#!/bin/bash
+
+generatedCertOutputDir={{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/
+serverLog={{ app_dir }}/server.log
+
+function log() {
+  currentDate=`date '+%Y-%m-%d %H:%M:%S.111'`
+  logMessage="$currentDate $1  [ssl_renewal] $2"
+  echo $logMessage >> $serverLog
+}
+
+oldLastModifiedCertFile=$(date -r ${generatedCertOutputDir}cert.pem)
+
+log "INFO" "Starting renewal of SSL cert in ouput $generatedCertOutputDir with lastmodified at $oldLastModifiedCertFile"
+
+# Use Let's Encrypt certbot to order a free certificate
+certbot certonly --non-interactive --manual \
+  --manual-auth-hook "{{ sslcert_dir }}/auth-hook.sh UPSERT runyourdinner.eu" \
+  --manual-cleanup-hook "{{ sslcert_dir }}/auth-hook.sh DELETE runyourdinner.eu" \
+  --preferred-challenge dns \
+  --config-dir "{{ sslcert_dir }}/letsencrypt" \
+  --work-dir "{{ sslcert_dir }}/letsencrypt" \
+  --logs-dir "{{ sslcert_dir }}/letsencrypt" \
+  --agree-tos \
+  --manual-public-ip-logging-ok \
+  --domains runyourdinner.eu \
+  --email clemensstich@googlemail.com
+
+if [ ! -f ${generatedCertOutputDir}cert.pem ]; then
+log "ERROR" "Cert.pem in $generatedCertOutputDir does not exist any longer!"
+exit 1
+else
+newLastModifiedCertfile=$(date -r ${generatedCertOutputDir}cert.pem)
+if [ "$newLastModifiedCertfile" = "$oldLastModifiedCertFile" ]; then
+log "ERROR" "Cert.pem in $generatedCertOutputDir seems not to be renewed"
+fi
+fi
+
+log "INFO" "Restarting nginx"
+sudo systemctl reload nginx
+
+log "INFO" "Uploading new SSL Certs to S3 Bucket {{ s3_bucket }}"
+
+aws s3 cp ${generatedCertOutputDir}cert.pem s3://{{ s3_bucket }}/sslcert/cert.pem
+aws s3 cp ${generatedCertOutputDir}chain.pem s3://{{ s3_bucket }}/sslcert/chain.pem
+aws s3 cp ${generatedCertOutputDir}fullchain.pem s3://{{ s3_bucket }}/sslcert/fullchain.pem
+aws s3 cp ${generatedCertOutputDir}privkey.pem s3://{{ s3_bucket }}/sslcert/privkey.pem
+
+log "SUCCESS" "SSL Cert renewal finished!"

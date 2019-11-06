@@ -1,0 +1,116 @@
+---
+
+- name: Copy nginx conf
+  template:
+    src: nginx.conf.j2
+    dest: "/etc/nginx/sites-available/default"
+    owner: "{{ os_user }}"
+    group: "{{ os_user }}"
+    mode: 0644
+
+- name: Create symbolic link to nginx conf
+  file:
+    src: "/etc/nginx/sites-available/default"
+    dest: "/etc/nginx/sites-enabled/default"
+    owner: root
+    group: root
+    state: link
+  tags: nginx_sslcert
+
+- name: Create folder for letsencrypt pem files
+  file: >
+    path="{{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/"
+    state=directory
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: nginx_sslcert
+
+- name: Create folder for letsencrypt pem symbolic link files
+  file: >
+    path="{{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/"
+    state=directory
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: nginx_sslcert
+
+- name: check if ssl cert pem files exist
+  stat:
+    path: "{{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/fullchain.pem"
+  register: sslcert_files
+  tags: nginx_sslcert
+
+- name: Get latest fullchain.pem from s3 bucket
+  become: yes
+  become_user: "{{ os_user }}"
+  command: "aws s3 cp s3://{{ s3_bucket }}/sslcert/fullchain.pem {{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/fullchain.pem"
+  when: sslcert_files.stat.exists == False
+  tags: nginx_sslcert
+
+- name: Get latest privkey.pem from s3 bucket
+  become: yes
+  become_user: "{{ os_user }}"
+  command: "aws s3 cp s3://{{ s3_bucket }}/sslcert/privkey.pem {{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/privkey.pem"
+  when: sslcert_files.stat.exists == False
+  tags: nginx_sslcert
+
+- name: Get latest chain.pem from s3 bucket
+  become: yes
+  become_user: "{{ os_user }}"
+  command: "aws s3 cp s3://{{ s3_bucket }}/sslcert/chain.pem {{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/chain.pem"
+  when: sslcert_files.stat.exists == False
+  tags: nginx_sslcert
+
+- name: Get latest cert.pem from s3 bucket
+  become: yes
+  become_user: "{{ os_user }}"
+  command: "aws s3 cp s3://{{ s3_bucket }}/sslcert/fullchain.pem {{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/cert.pem"
+  when: sslcert_files.stat.exists == False
+  tags: nginx_sslcert
+
+- name: Create symbolic link to fullchain
+  file:
+    src: "{{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/fullchain.pem"
+    dest: "{{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/fullchain.pem"
+    owner: "{{ os_user }}"
+    group: "{{ os_user }}"
+    state: link
+  when: sslcert_files.stat.exists == False
+  tags: nginx_sslcert
+
+- name: Create symbolic link to privkey
+  file:
+    src: "{{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/privkey.pem"
+    dest: "{{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/privkey.pem"
+    owner: "{{ os_user }}"
+    group: "{{ os_user }}"
+    state: link
+  when: sslcert_files.stat.exists == False
+  tags: nginx_sslcert
+
+- name: Create symbolic link to chain
+  file:
+    src: "{{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/chain.pem"
+    dest: "{{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/chain.pem"
+    owner: "{{ os_user }}"
+    group: "{{ os_user }}"
+    state: link
+  when: sslcert_files.stat.exists == False
+  tags: nginx_sslcert
+
+- name: Create symbolic link to cert
+  file:
+    src: "{{ sslcert_dir }}/letsencrypt/archive/runyourdinner.eu/cert.pem"
+    dest: "{{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/cert.pem"
+    owner: "{{ os_user }}"
+    group: "{{ os_user }}"
+    state: link
+  when: sslcert_files.stat.exists == False
+  tags: nginx_sslcert
+
+- name: start nginx
+  service:
+    name: nginx
+    state: started
+  tags: nginx_sslcert
