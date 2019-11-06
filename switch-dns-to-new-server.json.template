@@ -1,0 +1,18 @@
+{
+  "Comment": "Switch DNS to new Elastic IP",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "runyourdinner.eu.",
+        "Type": "A",
+        "TTL": 600,
+        "ResourceRecords": [
+          {
+            "Value": "__EIP__"
+          }
+        ]
+      }
+    }
+  ]
+}
