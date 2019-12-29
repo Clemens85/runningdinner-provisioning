@@ -14,6 +14,9 @@
     - nginx_config
     - runningdinner_app
   vars:
+    #java_version: 8
+    source_download_url: "https://corretto.aws/downloads/latest/amazon-corretto-8-x64-linux-jdk.tar.gz"
+    debian_download_url: "https://corretto.aws/downloads/latest/amazon-corretto-8-x64-linux-jdk.deb"
     os_user: "ubuntu"
     home_dir: "/home/ubuntu"
     sslcert_dir: "{{ home_dir }}/sslcert"

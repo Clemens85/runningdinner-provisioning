@@ -1,12 +1,12 @@
 provider "aws" {
-  region                  = var.region
+  region  = var.region
   version = "2.33"
 }
 
 terraform {
   backend "s3" {
-    bucket = "runyourdinner"
-    key = "terraform/state.tfstate"
+    bucket = "runyourdinner-terraform-backend"
+    key = "services/state.tfstate"
     region = "eu-central-1"
   }
 }
@@ -73,35 +73,6 @@ data "aws_internet_gateway" "runyourdinner-internet-gateway" {
 //  }
 //}
 
-resource "aws_s3_bucket" "runyourdinner-s3-bucket" {
-  bucket = var.s3_bucket_name
-  acl    = "private"
-  tags = {
-    Name = "runyourdinner-s3-bucket"
-    Service = "runyourdinner"
-  }
-
-  policy = <<POLICY
-{
-  "Id": "Policy1572622065147",
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "Stmt1572622052716",
-      "Action": "s3:*",
-      "Effect": "Allow",
-      "Resource": "arn:aws:s3:::runyourdinner/*",
-      "Principal": {
-        "AWS": [
-          "arn:aws:iam::332135779582:user/technical-user",
-          "arn:aws:iam::332135779582:user/clemens-stich-dev"
-        ]
-      }
-    }
-  ]
-}
-  POLICY
-}
 
 // *** Create Security Group for EC2 which allows HTTP(S) traffic and SSH access for my IP *** //
 data "http" "myip" {
@@ -176,7 +147,7 @@ data "aws_ami" "ubuntu" {
 }
 resource "aws_key_pair" "runyourdinner-sshkey" {
   key_name = "runyourdinner-sshkey"
-  public_key = "${file("../id_rsa.pub")}"
+  public_key = "${file("../../id_rsa.pub")}"
 }
 resource "aws_instance" "runyourdinner-appserver" {
   ami = data.aws_ami.ubuntu.id
@@ -201,6 +172,87 @@ resource "aws_eip" "runyourdinner-eip" {
     Service = "runyourdinner"
   }
 }
+
+
+data "aws_iam_user" "technical-user" {
+  user_name = "technical-user"
+}
+data "aws_iam_user" "clemens-stich-dev" {
+  user_name = "clemens-stich-dev"
+}
+
+resource "aws_sqs_queue" "geocode" {
+  name = "geocode"
+  redrive_policy = "{\"deadLetterTargetArn\":\"${aws_sqs_queue.geocode-dl.arn}\",\"maxReceiveCount\":5}"
+  tags = {
+    Name = "geocode"
+    Service = "runyourdinner"
+  }
+  policy = <<POLICY
+{
+   "Version": "2012-10-17",
+   "Statement": [{
+      "Effect": "Allow",
+      "Action": "sqs:*",
+      "Resource": "arn:aws:sqs:*:geocode*",
+      "Principal": {
+        "AWS": [
+          "${data.aws_iam_user.clemens-stich-dev.arn}",
+          "${data.aws_iam_user.technical-user.arn}"
+        ]
+      }
+   }]
+}
+  POLICY
+}
+
+resource "aws_sqs_queue" "geocode-dl" {
+  name = "geocode-dl"
+  tags = {
+    Name = "geocode-dl"
+    Service = "runyourdinner"
+  }
+}
+
+data "aws_iam_group" "dev-group" {
+  group_name = "Dev"
+}
+resource  "aws_iam_policy" "serverless-policy" {
+  name = "ServerlessBase"
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:*",
+        "s3:*",
+        "logs:*",
+        "iam:*",
+        "apigateway:*",
+        "lambda:*",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVpcs",
+        "events:*"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}
+  POLICY
+}
+
+resource "aws_iam_group_policy_attachment" "dev-group-lambda-policy" {
+  group = data.aws_iam_group.dev-group.group_name
+  policy_arn = "${aws_iam_policy.serverless-policy.arn}"
+}
+
+
+
 
 
 // **** Resources that are already created and not managed by terraform **** //
