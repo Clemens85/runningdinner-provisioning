@@ -15,7 +15,7 @@
     dest="{{ sslcert_dir }}/auth-hook.sh"
     owner="{{ os_user }}"
     group="{{ os_user }}"
-    mode=0644
+    mode=0755
   tags: sslcert
 
 - name: Copy renew ssl cert script
@@ -24,10 +24,12 @@
     dest="{{ sslcert_dir }}/renew-cert-nginx.sh"
     owner="{{ os_user }}"
     group="{{ os_user }}"
-    mode=0644
+    mode=0755
   tags: sslcert
 
 - name: Add Path to crontab
+  become: yes
+  become_user: "{{ os_user }}"
   cron:
     name: PATH
     env: yes
@@ -35,6 +37,8 @@
   tags: sslcert
 
 - name: Add renew ssl cert script to crontab
+  become: yes
+  become_user: "{{ os_user }}"
   cron:
     name: "renew ssl cert"
     minute: "0"
