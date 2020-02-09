@@ -27,13 +27,17 @@ certbot certonly --non-interactive --manual \
   --email clemensstich@googlemail.com
 
 if [ ! -f ${generatedCertOutputDir}cert.pem ]; then
-log "ERROR" "Cert.pem in $generatedCertOutputDir does not exist any longer!"
-exit 1
+  log "ERROR" "Cert.pem in $generatedCertOutputDir does not exist any longer!"
+  exit 1
 else
-newLastModifiedCertfile=$(date -r ${generatedCertOutputDir}cert.pem)
-if [ "$newLastModifiedCertfile" = "$oldLastModifiedCertFile" ]; then
-log "ERROR" "Cert.pem in $generatedCertOutputDir seems not to be renewed"
-fi
+  newLastModifiedCertfile=$(date -r ${generatedCertOutputDir}cert.pem)
+  if [ "$newLastModifiedCertfile" = "$oldLastModifiedCertFile" ]; then
+    log "ERROR" "Cert.pem in $generatedCertOutputDir seems not to be renewed"
+  else
+    cp -u ${generatedCertOutputDir}chain.pem {{ sslcert_dir }}/nginx/chain.pem
+    cp -u ${generatedCertOutputDir}fullchain.pem {{ sslcert_dir }}/nginx/fullchain.pem
+    cp -u ${generatedCertOutputDir}privkey.pem {{ sslcert_dir }}/nginx/privkey.pem
+  fi
 fi
 
 log "INFO" "Restarting nginx"

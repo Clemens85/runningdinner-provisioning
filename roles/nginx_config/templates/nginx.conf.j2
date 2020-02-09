@@ -11,9 +11,9 @@ server {
     listen 443;
     ssl on;
 
-    ssl_certificate {{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/fullchain.pem;
-	  ssl_certificate_key {{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/privkey.pem;
-	  ssl_trusted_certificate {{ sslcert_dir }}/letsencrypt/live/runyourdinner.eu/chain.pem;
+    ssl_certificate {{ sslcert_dir }}/nginx/fullchain.pem;
+	  ssl_certificate_key {{ sslcert_dir }}/nginx/privkey.pem;
+	  ssl_trusted_certificate {{ sslcert_dir }}/nginx/chain.pem;
 
     add_header Strict-Transport-Security "max-age=31536000" always;
 

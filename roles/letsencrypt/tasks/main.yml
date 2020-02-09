@@ -27,6 +27,15 @@
     mode=0755
   tags: sslcert
 
+- name: create folder where ssl certs are stored for nginx
+  file: >
+    path="{{ sslcert_dir }}/nginx"
+    state=directory
+    owner="{{ os_user }}"
+    group="{{ os_user }}"
+    mode=0755
+  tags: sslcert
+
 - name: Add Path to crontab
   become: yes
   become_user: "{{ os_user }}"
