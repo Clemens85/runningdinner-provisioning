@@ -52,7 +52,7 @@
     name: "renew ssl cert"
     minute: "0"
     hour: "4"
-    day: "3"
-    month: "3,6,9,12"
+    day: "1"
+    month: "2,5,8,11"
     job: "{{ sslcert_dir }}/renew-cert-nginx.sh >> {{ sslcert_dir }}/renew-cert.log"
   tags: sslcert
