@@ -19,12 +19,12 @@
     mode=0755
   tags: filebeat
 
-- name: Copy Filebeat logzio ssl cert
-  copy: >
-    src=COMODORSADomainValidationSecureServerCA.crt
-    dest="/etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt"
-    owner="{{ os_user }}"
-    group="{{ os_user }}"
-    mode=0644
+- name: Download Filebeat logzio ssl cert
+  get_url:
+    url: https://raw.githubusercontent.com/logzio/public-certificates/master/AAACertificateServices.crt
+    dest: /etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt
+    owner: "{{ os_user }}"
+    group: "{{ os_user }}"
+    mode: '0644'
   notify: restart filebeat
   tags: filebeat
