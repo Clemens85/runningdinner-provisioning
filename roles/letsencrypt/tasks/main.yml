@@ -51,8 +51,7 @@
   cron:
     name: "renew ssl cert"
     minute: "0"
-    hour: "4"
-    day: "1"
-    month: "2,5,8,11"
+    hour: "16"
+    day: "WED"
     job: "{{ sslcert_dir }}/renew-cert-nginx.sh >> {{ sslcert_dir }}/renew-cert.log"
   tags: sslcert
