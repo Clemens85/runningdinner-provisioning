@@ -23,7 +23,7 @@
     app_dir: "{{ home_dir }}/runningdinner"
     upload_dir: "{{ home_dir }}/upload"
     s3_bucket: "runyourdinner"
-    credentials_dir: "/home/clemens/Dev/projects/runningdinner-credentials"
+    credentials_dir:
     logzio_token:
 
 

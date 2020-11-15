@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
-credentialsFolder="/home/clemens/Dev/projects/runningdinner-credentials"
+if [[ $# -lt 1 ]] ; then
+  echo "Need to pass path of folder where credentials are located"
+  exit -1
+fi
+
+credentialsFolder=$1
 
 publicServerIp=$(cd aws/ec2-network && terraform output elastic_ip)
 
