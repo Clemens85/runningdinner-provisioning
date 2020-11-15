@@ -1,3 +1,7 @@
+**Content**
+* Terraform scripts for provisioning AWS resoucrces
+* Ansible scripts for provisioning EC2 application server
+
 **Credentials**
 
 AWS Credentials for technical user on app server and token for logzio account are not part of repository
