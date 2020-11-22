@@ -135,13 +135,19 @@ resource "aws_security_group_rule" "runyourdinner-db-traffic-sql" {
 
 // *** Setup EC2 *** //
 data "aws_ami" "ubuntu" {
-  most_recent = true
+  # most_recent = true
   owners = ["099720109477"]
 
   filter {
     name = "name"
     values = [
       "ubuntu/images/hvm-ssd/ubuntu-xenial-16*-amd64-server*"
+    ]
+  }
+  filter { # Currently I want to stick to a fixed AMI due to I have no AMI based app deployment
+    name = "image-id"
+    values = [
+      "ami-0062c497b55437b01"
     ]
   }
 }
@@ -177,9 +183,6 @@ resource "aws_eip" "runyourdinner-eip" {
 data "aws_iam_user" "technical-user" {
   user_name = "technical-user"
 }
-data "aws_iam_user" "clemens-stich-dev" {
-  user_name = "clemens-stich-dev"
-}
 
 resource "aws_sqs_queue" "geocode" {
   name = "geocode"
@@ -197,7 +200,6 @@ resource "aws_sqs_queue" "geocode" {
       "Resource": "arn:aws:sqs:*:geocode*",
       "Principal": {
         "AWS": [
-          "${data.aws_iam_user.clemens-stich-dev.arn}",
           "${data.aws_iam_user.technical-user.arn}"
         ]
       }
@@ -217,8 +219,8 @@ resource "aws_sqs_queue" "geocode-dl" {
 data "aws_iam_group" "dev-group" {
   group_name = "Dev"
 }
-resource  "aws_iam_policy" "serverless-policy" {
-  name = "ServerlessBase"
+resource  "aws_iam_policy" "dev-policy" {
+  name = "dev-group-policy"
   policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -235,7 +237,8 @@ resource  "aws_iam_policy" "serverless-policy" {
         "ec2:DescribeSecurityGroups",
         "ec2:DescribeSubnets",
         "ec2:DescribeVpcs",
-        "events:*"
+        "events:*",
+        "health:*"
       ],
       "Resource": [
         "*"
@@ -245,15 +248,121 @@ resource  "aws_iam_policy" "serverless-policy" {
 }
   POLICY
 }
-
-resource "aws_iam_group_policy_attachment" "dev-group-lambda-policy" {
+resource "aws_iam_group_policy_attachment" "dev-group-policy" {
   group = data.aws_iam_group.dev-group.group_name
-  policy_arn = "${aws_iam_policy.serverless-policy.arn}"
+  policy_arn = "${aws_iam_policy.dev-policy.arn}"
 }
 
 
+resource "aws_iam_user" "ci_user" {
+  name = "ci_user"
+}
+resource  "aws_iam_policy" "ci-user-policy" {
+  name = "ci-user-policy"
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:AuthorizeSecurityGroupIngress"
+      ],
+      "Resource": [ "*" ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [ "iam:PassRole" ],
+      "Resource": [ "*" ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+          "cloudformation:Describe*",
+          "cloudformation:List*",
+          "cloudformation:Get*",
+          "cloudformation:PreviewStackUpdate",
+          "cloudformation:CreateStack",
+          "cloudformation:UpdateStack",
+          "cloudformation:ValidateTemplate"
+      ],
+      "Resource": [ "*" ]
+    },
+    {
+        "Effect": "Allow",
+        "Action": [ "s3:*" ],
+        "Resource": [ "*" ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+          "lambda:GetFunction",
+          "lambda:CreateFunction",
+          "lambda:DeleteFunction",
+          "lambda:UpdateFunctionConfiguration",
+          "lambda:UpdateFunctionCode",
+          "lambda:ListVersionsByFunction",
+          "lambda:PublishVersion",
+          "lambda:CreateAlias",
+          "lambda:DeleteAlias",
+          "lambda:UpdateAlias",
+          "lambda:GetFunctionConfiguration",
+          "lambda:AddPermission",
+          "lambda:RemovePermission",
+          "lambda:InvokeFunction"
+      ],
+      "Resource": [ "*" ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+          "apigateway:GET",
+          "apigateway:HEAD",
+          "apigateway:OPTIONS",
+          "apigateway:PATCH",
+          "apigateway:POST",
+          "apigateway:PUT",
+          "apigateway:DELETE"
+      ],
+      "Resource": [
+          "arn:aws:apigateway:*::/restapis",
+          "arn:aws:apigateway:*::/restapis/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+          "logs:DescribeLogGroups",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:DeleteLogGroup",
+          "logs:DeleteLogStream",
+          "logs:DescribeLogStreams",
+          "logs:FilterLogEvents"
+      ],
+      "Resource": [ "*" ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+          "events:DescribeRule",
+          "events:PutRule",
+          "events:PutTargets",
+          "events:RemoveTargets",
+          "events:DeleteRule"
+      ],
+      "Resource": [ "*" ]
+    }
+  ]
+}
+  POLICY
+}
 
-
+resource "aws_iam_user_policy_attachment" "ci-user-policy_attachmment" {
+  user = "${aws_iam_user.ci_user.name}"
+  policy_arn = "${aws_iam_policy.ci-user-policy.arn}"
+}
 
 // **** Resources that are already created and not managed by terraform **** //
 
