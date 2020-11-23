@@ -273,7 +273,10 @@ resource  "aws_iam_policy" "ci-user-policy" {
     },
     {
       "Effect": "Allow",
-      "Action": [ "iam:PassRole" ],
+      "Action": [
+        "iam:PassRole",
+        "iam:GetRole"
+      ],
       "Resource": [ "*" ]
     },
     {
